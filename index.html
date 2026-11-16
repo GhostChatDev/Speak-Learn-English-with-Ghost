@@ -14,15 +14,10 @@
 :root{color-scheme:dark;background:#101116;color:#f6f5fc;font-family:ui-rounded,"SF Pro Rounded",system-ui,-apple-system,sans-serif}*{box-sizing:border-box}body{margin:0;min-height:100svh;display:grid;place-items:center;background:radial-gradient(ellipse at 70% 10%,#40305d80,transparent 55%),#101116}.loading{width:min(100%,430px);padding:48px 28px;text-align:center}.ghost{width:100px;height:108px;filter:drop-shadow(0 0 28px #beaaff55);animation:float 4s ease-in-out infinite}h1{font-size:2rem;letter-spacing:-.04em;margin:18px 0 8px}p{color:#bebbcf;line-height:1.6;margin:0 0 24px}span{font-size:.8rem;color:#8be4c5}a{color:#beaaff}@keyframes float{50%{transform:translateY(-6px)}}@media(prefers-reduced-motion:reduce){.ghost{animation:none}}
 </style>
 <script>
-// One-way entry point. The whole learning app lives in ghost-speak-web.html, so the existing
-// localStorage origin/key and all learning logic are reused.
-// The entry=index marker makes this shell redirect at most once: if a host ever serves this
-// shell again for that URL, it stops here instead of bouncing between the two files.
-(function(){
-try{
-if(!/[?&]entry=index(&|$)/.test(location.search))location.replace('ghost-speak-web.html?entry=index');
-}catch(error){}
-})();
+// GitHub Pages serves index.html at the project URL. Keep the complete learning app in its
+// existing file so the user's current localStorage origin/key and all learning logic are reused.
+// The query marker prevents accidental loops if a host serves this shell for unknown paths.
+if(new URLSearchParams(location.search).has('launch'))location.replace('ghost-speak-web.html');
 </script>
 </head>
 <body>
@@ -33,14 +28,9 @@ if(!/[?&]entry=index(&|$)/.test(location.search))location.replace('ghost-speak-w
 <p><a id="open" href="ghost-speak-web.html">Open Ghost Speak</a></p>
 </main>
 <script>
-// No second redirect here on purpose: exactly one script decides where to go, so the shell and
-// the app can never bounce. This only makes the visible fallback obvious if the head redirect
-// did not happen (script blocked, file missing, or the host served this shell again).
-setTimeout(function(){
-var message=document.getElementById('message'),link=document.getElementById('open');
-if(message&&/^Opening/.test(message.textContent))message.textContent='Tap “Open Ghost Speak” to start learning. Your progress stays in this browser.';
-if(link)link.focus();
-},1200);
+try{
+if(!location.search.includes('launch'))location.replace('ghost-speak-web.html?launch=1');
+}catch(error){document.getElementById('message').textContent='Tap “Open Ghost Speak” to start learning. Your progress will stay in this browser.';}
 </script>
 </body>
 </html>
