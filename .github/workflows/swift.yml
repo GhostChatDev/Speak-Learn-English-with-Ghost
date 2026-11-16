@@ -1,0 +1,82 @@
+name: Web Content & Browser Check
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate extracted domain & 13 lessons (135 questions)
+        run: |
+          node --input-type=module -e '
+            import fs from "node:fs";
+            import assert from "node:assert/strict";
+            const html = fs.readFileSync("ghost-speak-web.html", "utf8");
+            const start = html.indexOf("<script type=\"module\">") + "<script type=\"module\">".length;
+            const end = html.indexOf("// DOMAIN_END");
+            assert(start > 20 && end > start, "Domain block markers missing");
+            fs.writeFileSync("./domain-check.mjs", html.slice(start, end));
+            const m = await import("./domain-check.mjs");
+            const errs = m.validateContent(m.LESSONS);
+            assert.deepEqual(errs, [], "Content validation errors: " + errs.join("; "));
+            assert.equal(m.LESSONS.length, 13, "Expected 13 total lessons (3 starter + 10 new)");
+            const newLessons = m.LESSONS.slice(3);
+            assert.equal(newLessons.length, 10, "Expected 10 new lessons");
+            for (const l of newLessons) {
+              assert.equal(l.items.length, 12, `Lesson ${l.id} should have 12 items`);
+              const qs = m.buildLessonQuestions(l);
+              assert.equal(qs.length, 12);
+              for (const q of qs) {
+                assert.equal(q.options.length, 4);
+                assert.equal(m.grade(q, q.correctIndex), true);
+              }
+            }
+            const totalItems = m.LESSONS.reduce((n, l) => n + l.items.length, 0);
+            assert.equal(totalItems, 135, "Expected 135 total questions");
+            console.log("CONTENT CHECK PASSED:", m.LESSONS.length, "lessons,", totalItems, "questions, 0 errors.");
+          '
+      - name: Run headless Chromium E2E check
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+          node --input-type=module -e '
+            import { chromium } from "playwright";
+            import http from "node:http";
+            import fs from "node:fs";
+            import path from "node:path";
+            import assert from "node:assert/strict";
+            const server = http.createServer((req, res) => {
+              let p = new URL(req.url, "http://127.0.0.1").pathname;
+              if (p === "/") p = "/index.html";
+              const f = path.join(process.cwd(), p);
+              if (!fs.existsSync(f)) { res.writeHead(404); res.end(); return; }
+              res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+              res.end(fs.readFileSync(f));
+            });
+            await new Promise(r => server.listen(0, "127.0.0.1", r));
+            const url = `http://127.0.0.1:${server.address().port}/`;
+            const browser = await chromium.launch();
+            const page = await browser.newPage();
+            const errors = [];
+            page.on("pageerror", e => errors.push(e.message));
+            await page.goto(url, { waitUntil: "load" });
+            await page.waitForSelector("[data-lesson]", { timeout: 10000 });
+            const lessonCount = await page.locator("[data-lesson]").count();
+            assert.equal(lessonCount, 13, "Expected 13 lesson buttons rendered");
+            await page.locator("[data-lesson=\"smalltalk\"]").click();
+            await page.waitForSelector(".choice");
+            const choiceCount = await page.locator(".choice").count();
+            assert.equal(choiceCount, 4, "Expected 4 choices rendered");
+            await page.locator(".choice").first().click();
+            await page.waitForSelector(".feedback.show");
+            assert.equal(errors.length, 0, "Page errors: " + errors.join("; "));
+            await browser.close();
+            server.close();
+            console.log("BROWSER E2E CHECK PASSED: 13 lessons rendered, 4-choice interaction verified.");
+          '
