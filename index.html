@@ -14,23 +14,20 @@
 :root{color-scheme:dark;background:#101116;color:#f6f5fc;font-family:ui-rounded,"SF Pro Rounded",system-ui,-apple-system,sans-serif}*{box-sizing:border-box}body{margin:0;min-height:100svh;display:grid;place-items:center;background:radial-gradient(ellipse at 70% 10%,#40305d80,transparent 55%),#101116}.loading{width:min(100%,430px);padding:48px 28px;text-align:center}.ghost{width:100px;height:108px;filter:drop-shadow(0 0 28px #beaaff55);animation:float 4s ease-in-out infinite}h1{font-size:2rem;letter-spacing:-.04em;margin:18px 0 8px}p{color:#bebbcf;line-height:1.6;margin:0 0 24px}span{font-size:.8rem;color:#8be4c5}a{color:#beaaff}@keyframes float{50%{transform:translateY(-6px)}}@media(prefers-reduced-motion:reduce){.ghost{animation:none}}
 </style>
 <script>
-// GitHub Pages serves index.html at the project URL. Keep the complete learning app in its
-// existing file so the user's current localStorage origin/key and all learning logic are reused.
-// The query marker prevents accidental loops if a host serves this shell for unknown paths.
-if(new URLSearchParams(location.search).has('launch'))location.replace('ghost-speak-web.html');
+// GitHub Pages serves index.html at the project root. Redirect once to ghost-speak-web.html.
+try {
+  if (!/(?:^|[?&])launch(?:$|[=&])/.test(location.search)) {
+    location.replace("ghost-speak-web.html?entry=index");
+  }
+} catch (_) {}
 </script>
 </head>
 <body>
 <main class="loading">
 <svg class="ghost" viewBox="0 0 160 170" role="img" aria-label="Your friendly Ghost companion"><defs><radialGradient id="ghostGlow"><stop stop-color="#fff9ff"/><stop offset=".65" stop-color="#dfd3ff"/><stop offset="1" stop-color="#a994e6"/></radialGradient></defs><path d="M36 130C31 102 33 62 49 42C66 20 100 22 116 45C130 66 124 101 135 129C140 145 124 149 112 142C100 135 98 154 84 151C72 150 71 137 59 144C44 154 29 147 36 130Z" fill="url(#ghostGlow)" stroke="#e6dcff" stroke-width="2"/><ellipse cx="62" cy="82" rx="4" ry="6" fill="#4e3b65"/><ellipse cx="99" cy="82" rx="4" ry="6" fill="#4e3b65"/><path d="M73 96Q81 104 89 96" fill="none" stroke="#4e3b65" stroke-width="3" stroke-linecap="round"/></svg>
-<h1>Ghost Speak.</h1><p id="message">Opening your next small step in English…</p><span>Your learning stays in this browser.</span>
+<h1>Ghost Speak · Challenge Pack 2</h1><p id="message">13 lessons · 135 four-choice challenges · Opening now…</p><span>Your learning stays in this browser.</span>
 <noscript><p>Ghost Speak needs JavaScript for lessons and saving progress. Enable it, then reload.</p></noscript>
-<p><a id="open" href="ghost-speak-web.html">Open Ghost Speak</a></p>
+<p><a id="open" href="ghost-speak-web.html?entry=index">Open Ghost Speak (13 Lessons + Sound)</a></p>
 </main>
-<script>
-try{
-if(!location.search.includes('launch'))location.replace('ghost-speak-web.html?launch=1');
-}catch(error){document.getElementById('message').textContent='Tap “Open Ghost Speak” to start learning. Your progress will stay in this browser.';}
-</script>
 </body>
 </html>
